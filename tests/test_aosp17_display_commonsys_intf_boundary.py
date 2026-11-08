@@ -143,12 +143,20 @@ class DisplayCommonsysIntfBoundary(unittest.TestCase):
         self.assertFalse((ROOT / "aidl/aiqe").exists())
         # The 2024 archive does not close the pinned modern HWC3 candidate dependencies.
 
-    def test_vendor_blob_reference_requires_display_abi_review(self):
-        blobs = external("PE_MONDRIAN_BLOBS")
-        self.assertIn("vendor/bin/hw/vendor.display.color@1.0-service", blobs)
-        self.assertIn("vendor/lib64/vendor.display.color@1.0.so", blobs)
-        self.assertIn("vendor/lib64/libsdm-color.so", blobs)
-        # Existing Xiaomi vendor HIDL display consumers are not implicitly AIDL/V12 compatible.
+    def test_archived_interfaces_are_not_mondrian_device_implementation(self):
+        # The archive may be reviewed for its source contracts. It does not
+        # supply a device product or a validated implementation of display HAL.
+        for file in ("BoardConfig.mk", "device.mk", "AndroidProducts.mk",
+                     "vendorsetup.sh", "init.mondrian.rc"):
+            with self.subTest(file=file):
+                self.assertFalse((ROOT / file).exists())
+        for file in ("config/display-interfaces-product.mk",
+                     "config/display-product-system.mk"):
+            text = (ROOT / file).read_text(encoding="utf-8")
+            self.assertNotIn("PRODUCT_NAME :=", text)
+            self.assertNotIn("TARGET_DEVICE :=", text)
+        # No external LineageOS device-tree checkout or proprietary blob
+        # list is a CI prerequisite of the independent AOSP17 base.
 
     def test_official_aosp17_graph_does_not_import_archived_interface(self):
         root = ET.fromstring(external("PE_AOSP17_REFERENCE"))
