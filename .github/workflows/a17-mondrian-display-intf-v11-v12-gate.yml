@@ -39,16 +39,16 @@ jobs:
           git -C "$RUNNER_TEMP/pe-a17-manifest" remote add origin \
             https://github.com/PixelExperience-Reborn/manifest.git
           git -C "$RUNNER_TEMP/pe-a17-manifest" fetch -q --depth 1 origin \
-            77d6acd775360f6fc076ae789c9929ed2ff325ea
+            f9aec21ecc1b341acc3525e351596e0b6474fa38
           git -C "$RUNNER_TEMP/pe-a17-manifest" checkout -q --detach FETCH_HEAD
           test "$(git -C "$RUNNER_TEMP/pe-a17-manifest" rev-parse HEAD)" = \
-            "77d6acd775360f6fc076ae789c9929ed2ff325ea"
+            "f9aec21ecc1b341acc3525e351596e0b6474fa38"
           python3 "$RUNNER_TEMP/pe-a17-manifest/tools/validate_aosp17_base_profiles.py"
           python3 -m unittest discover -s "$RUNNER_TEMP/pe-a17-manifest/tools" \
             -p test_aosp17_manifest_entrypoint.py -v
           python3 "$RUNNER_TEMP/pe-a17-manifest/tools/validate_135_repository_matrix.py"
 
-      - name: Get pinned newer Qualcomm-derived HWC3 and Xiaomi blob inventory source
+      - name: Get pinned Qualcomm-derived HWC3 source for API comparison
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/pe-a17-display-inputs"
@@ -60,15 +60,11 @@ jobs:
           fetch_pin \
             "https://raw.githubusercontent.com/sonyxperiadev/hardware-qcom-display/baf61f736e2109522e3f72754ee7cfacbfa2dc6c/composer/Android.bp" \
             "$RUNNER_TEMP/pe-a17-display-inputs/modern-composer.Android.bp"
-          fetch_pin \
-            "https://raw.githubusercontent.com/LF52406/mondrian_android_device_xiaomi_sm8450-common/6e0022f5100e09ac97980095b6ed8528f4ff823f/proprietary-files.txt" \
-            "$RUNNER_TEMP/pe-a17-display-inputs/mon-vendor-inventory.txt"
 
       - name: Check frozen QTI AIDL V11, missing V12/AIQE, old HIDL and stable source owners
         run: |
           set -euo pipefail
           PE_NEW_QCOM_COMPOSER_BP="$RUNNER_TEMP/pe-a17-display-inputs/modern-composer.Android.bp" \
-          PE_MONDRIAN_BLOBS="$RUNNER_TEMP/pe-a17-display-inputs/mon-vendor-inventory.txt" \
           PE_AOSP17_REFERENCE="$RUNNER_TEMP/pe-a17-manifest/aosp17_reference.xml" \
           PE_AOSP17_DEFAULT="$RUNNER_TEMP/pe-a17-manifest/default.xml" \
             python3 tests/test_aosp17_display_commonsys_intf_boundary.py
@@ -77,4 +73,4 @@ jobs:
         run: |
           echo "Static source and version/manifest checks only."
           echo "No Composer3, SDM/DRM, gralloc or real Android17 ROM was built."
-          echo "No Xiaomi blobs or hardware were run; HWC3 and vendor ABI unproven."
+          echo "No LF52406/LineageOS device tree or vendor inventory fetched; no hardware/ROM build performed."
