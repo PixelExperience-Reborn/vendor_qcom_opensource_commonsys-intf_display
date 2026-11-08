@@ -1,0 +1,80 @@
+name: AOSP17 mondrian Qualcomm display commonsys-intf source ABI boundary
+
+on:
+  push:
+    branches:
+      - audit/a17-mondrian-display-intf-v11-v12-boundary-20261108
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-legacy-aidl-and-modern-hwc3-dependency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Sparse, blob-filtered archive checkout (no graphics executables)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            Android.bp
+            aidl
+            config
+            gralloc
+            include
+            libqdmetadata
+            services
+            docs
+            tests
+            .github
+
+      - name: Verify immutable independent AOSP17 manifest and 135-repo matrix
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/pe-a17-manifest"
+          git -C "$RUNNER_TEMP/pe-a17-manifest" remote add origin \
+            https://github.com/PixelExperience-Reborn/manifest.git
+          git -C "$RUNNER_TEMP/pe-a17-manifest" fetch -q --depth 1 origin \
+            77d6acd775360f6fc076ae789c9929ed2ff325ea
+          git -C "$RUNNER_TEMP/pe-a17-manifest" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$RUNNER_TEMP/pe-a17-manifest" rev-parse HEAD)" = \
+            "77d6acd775360f6fc076ae789c9929ed2ff325ea"
+          python3 "$RUNNER_TEMP/pe-a17-manifest/tools/validate_aosp17_base_profiles.py"
+          python3 -m unittest discover -s "$RUNNER_TEMP/pe-a17-manifest/tools" \
+            -p test_aosp17_manifest_entrypoint.py -v
+          python3 "$RUNNER_TEMP/pe-a17-manifest/tools/validate_135_repository_matrix.py"
+
+      - name: Get pinned newer Qualcomm-derived HWC3 and Xiaomi blob inventory source
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pe-a17-display-inputs"
+          fetch_pin() {
+            curl --fail --location --silent --show-error --retry 3 \
+              "$1" --output "$2"
+            test -s "$2"
+          }
+          fetch_pin \
+            "https://raw.githubusercontent.com/sonyxperiadev/hardware-qcom-display/baf61f736e2109522e3f72754ee7cfacbfa2dc6c/composer/Android.bp" \
+            "$RUNNER_TEMP/pe-a17-display-inputs/modern-composer.Android.bp"
+          fetch_pin \
+            "https://raw.githubusercontent.com/LF52406/mondrian_android_device_xiaomi_sm8450-common/6e0022f5100e09ac97980095b6ed8528f4ff823f/proprietary-files.txt" \
+            "$RUNNER_TEMP/pe-a17-display-inputs/mon-vendor-inventory.txt"
+
+      - name: Check frozen QTI AIDL V11, missing V12/AIQE, old HIDL and stable source owners
+        run: |
+          set -euo pipefail
+          PE_NEW_QCOM_COMPOSER_BP="$RUNNER_TEMP/pe-a17-display-inputs/modern-composer.Android.bp" \
+          PE_MONDRIAN_BLOBS="$RUNNER_TEMP/pe-a17-display-inputs/mon-vendor-inventory.txt" \
+          PE_AOSP17_REFERENCE="$RUNNER_TEMP/pe-a17-manifest/aosp17_reference.xml" \
+          PE_AOSP17_DEFAULT="$RUNNER_TEMP/pe-a17-manifest/default.xml" \
+            python3 tests/test_aosp17_display_commonsys_intf_boundary.py
+
+      - name: Explicit scope
+        run: |
+          echo "Static source and version/manifest checks only."
+          echo "No Composer3, SDM/DRM, gralloc or real Android17 ROM was built."
+          echo "No Xiaomi blobs or hardware were run; HWC3 and vendor ABI unproven."
