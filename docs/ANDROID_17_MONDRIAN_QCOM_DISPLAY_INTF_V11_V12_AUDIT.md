@@ -22,15 +22,15 @@
 
 ## 3. Actual mondrian vendor-family evidence and blockers
 
-Read-only hardware reference from LF52406/proprietary_vendor_xiaomi_sm8450-common and LF52406/mondrian_android_device_xiaomi_sm8450-common. The existing blob inventory includes vendor.display.color@1.0 HIDL services, vendor.display.color@1.x shared libraries and SDM color libraries. Their ABI is not known compatible with an independently sourced Qualcomm HWC3 V2/V3 + new QTI display.config V12. A source-only checkout and green AIDL validator cannot establish HWC3/allocator/mapper + panel readiness.
+The LF52406/LineageOS device trees are read-only background references for individual hardware facts, not a PE-Reborn code source, product foundation, or CI dependency. No code, device configuration or build rules from those trees are imported in this stage. Vendor binary ABI for mondrian is not yet validated: an AIDL source check cannot establish that a Composer3/Allocator/Mapper implementation boots or draws correctly.
 
 Do not enable the old HIDL Composer2/HIDL mapper in parallel with the selected AIDL Composer3/Allocator/Stable-C mapper. Do not copy Sony display panel configuration or Xiaomi stock properties without real SM8475/DSI/DSC/DRM and vendor-lib verification. The only current goal is a buildable, bootable AOSP17 device: verify matching basic panel initialization, buffer allocation/composition, protected-buffer correctness and absence of black-screen/reboot regressions. Additional display features are not part of this stage.
 
 ## 4. Source-only work in the audit branch
 
 - Preserve historical Git ancestry, AIDL API snapshots, C++ headers, Makefiles and original Soong modules without modifying interface ABI or licences.
-- Add tests that cross-check pinned old AIDL versions, the actual product-HIDL packaging and incomplete V11, pinned newer HWC3 display.config V12/AIQE V2 requirements, Qualcomm packed buffer handle ABI, official AOSP17 source owner and Xiaomi vendor blob evidence.
-- CI uses sparse checkout and pinned commits; it does not execute Qualcomm services or pretend to compile the entire graphics stack.
+- Add tests for pinned old AIDL versions, historic HIDL packaging and missing V11, newer HWC3 config V12/AIQE V2 requirements, Qualcomm buffer-handle declarations, official AOSP17 ownership, and absence of a mondrian product definition in this archived interface tree. Tests do not depend on LF52406/LineageOS sources.
+- CI uses sparse checkout, pinned AOSP17 manifest and a read-only Qualcomm-derived source comparison. It does not download LF52406/LineageOS trees or proprietary inventories, execute Qualcomm services or build the full graphics stack.
 - Manifest companion Draft PR #2 blocks the old repo via exact checkout path **and** known repo aliases across active and experimental XML profiles. Two regression tests inject the old archive and an aliased checkout. Update row 192 in the strict 135-repository matrix. Historical seventeen and AOSP17 default.xml stay unchanged.
 
 ## 5. Remaining gates before a modern Display HAL can be selected
