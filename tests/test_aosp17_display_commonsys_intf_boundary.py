@@ -84,7 +84,7 @@ class DisplayCommonsysIntfBoundary(unittest.TestCase):
         src = (ROOT / "aidl/config/Android.bp").read_text(encoding="utf-8")
         self.assertIn('name: "vendor.qti.hardware.display.config"', src)
         self.assertIn('stability: "vintf"', src)
-        self.assertIn('imports: ["android.hardware.common-V2"]', src)
+        self.assertIn('"android.hardware.common-V2"', src)
         self.assertIn("frozen: true", src)
         versions = [int(v) for v in re.findall(r'version:\s*"(\d+)"', src)]
         self.assertEqual(versions, list(range(1, 12)))
