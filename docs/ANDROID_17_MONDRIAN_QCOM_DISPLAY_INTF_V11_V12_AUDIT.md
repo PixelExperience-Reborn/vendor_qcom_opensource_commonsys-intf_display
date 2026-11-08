@@ -24,7 +24,7 @@
 
 Read-only hardware reference from LF52406/proprietary_vendor_xiaomi_sm8450-common and LF52406/mondrian_android_device_xiaomi_sm8450-common. The existing blob inventory includes vendor.display.color@1.0 HIDL services, vendor.display.color@1.x shared libraries and SDM color libraries. Their ABI is not known compatible with an independently sourced Qualcomm HWC3 V2/V3 + new QTI display.config V12. A source-only checkout and green AIDL validator cannot establish HWC3/allocator/mapper + panel readiness.
 
-Do not enable the old HIDL Composer2/HIDL mapper in parallel with the selected AIDL Composer3/Allocator/Stable-C mapper. Do not copy Sony display panel configuration or Xiaomi stock properties without real SM8475/DSI/DSC/DRM and vendor-lib verification. Keep the existing FHD+ / WQHD+ and ROI goals **outside** this unvalidated HAL import: panel flicker, blank-screen/reboot, frame pacing, GPU UBWC and protected media must be tested on hardware.
+Do not enable the old HIDL Composer2/HIDL mapper in parallel with the selected AIDL Composer3/Allocator/Stable-C mapper. Do not copy Sony display panel configuration or Xiaomi stock properties without real SM8475/DSI/DSC/DRM and vendor-lib verification. The only current goal is a buildable, bootable AOSP17 device: verify matching basic panel initialization, buffer allocation/composition, protected-buffer correctness and absence of black-screen/reboot regressions. Additional display features are not part of this stage.
 
 ## 4. Source-only work in the audit branch
 
@@ -38,7 +38,7 @@ Do not enable the old HIDL Composer2/HIDL mapper in parallel with the selected A
 1. Obtain verified matching Qualcomm SDM/DRM/KMS implementation and all closed Soong dependencies from a reviewed, licence-compatible source, including real AIDL V12/AIQE interface providers.
 2. Confirm the actual Xiaomi vendor blob ELF DT_NEEDED/symbols, gralloc private-handle structure and metadata offsets, protected buffers, UBWC and ION/DMA-buf import/export with the correct kernel/userspace ABI.
 3. Validate single-service ownership and exact VINTF/FCM for graphics Composer3 IComposer/default, Allocator IAllocator/default, Stable-C mapper provider, Qualcomm vendor display.config and color extension; no duplicate legacy HIDL registration.
-4. Build full clean AOSP17 + vendor modules, check SELinux enforcing, CTS/VTS/graphics tests and safe resolution switching, ROI, refresh/fps voting, brightness, AOD, suspend/resume, Miracast and sustained game performance on actual mondrian.
+4. Build full clean AOSP17 with required vendor modules; verify SELinux enforcing, VINTF/FCM and basic graphics CTS/VTS, successful boot to the launcher, stable panel output and Composer3/Allocator/Mapper operation on actual mondrian. Defer all nonessential display enhancements.
 5. Roll back a mismatched display stack rather than weakening SELinux, forcing old VINTF versions or using unsafe panel tuning.
 
 **No full repo sync, Soong build, HAL compilation, kernel build, vendor ABI closure, flash/boot or physical device tests were performed by this stage. This is an audited/excluded archival interface source, not a finished Android17 display implementation.**
